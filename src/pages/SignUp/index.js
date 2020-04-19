@@ -10,6 +10,7 @@ export default function Login() {
   const history = useHistory();
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function useInput({ type }) {
     const [value, setValue] = useState("");
@@ -27,23 +28,32 @@ export default function Login() {
   const [passwordd, passwordInput] = useInput({ type: "password" });
 
   async function validCredencials(e) {
+    setLoading(true);
+
     e.preventDefault();
 
     if (!username || !passwordd) {
-      setError("Preencha e-mail e senha para continuar");
+      setError("Preencha login e password para continuar");
+      setLoading(false);
     } else {
-      try {
-        const response = await api.post("/login", {
+      await api
+        .post("/login", {
           email: username,
           password: passwordd,
+        })
+        .then(function (response) {
+          login(response.data.token);
+
+          setLoading(false);
+
+          history.push("/app");
+        })
+        .catch(function (error) {
+          setError(error.response.data.error);
+        })
+        .then(function () {
+          setLoading(false);
         });
-
-        login(response.data.token);
-
-        history.push("/app");
-      } catch (error) {
-        setError(error.response.data.error);
-      }
     }
   }
 
@@ -61,7 +71,7 @@ export default function Login() {
                 />
               </div>
 
-              <div className="text-center my-3">{error}</div>
+              <h4 className="text-center text-uppercase my-3">{error}</h4>
 
               <Form.Group controlId="exampleForm.ControlInput1">
                 <Form.Label>Login</Form.Label>
@@ -77,6 +87,8 @@ export default function Login() {
                 <ButtonBlue type="submit" className="rounded-pill py-3 px-5">
                   Finalizar Compra
                 </ButtonBlue>
+
+                {loading && <div>Logando... </div>}
 
                 <div className="mt-4">
                   <div className="mb-3">
